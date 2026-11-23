@@ -599,8 +599,8 @@ export function createLeadPilotApiApp() {
   });
 
   app.get("/api/leads/:id", (req, res) => {
-    const id = Number(req.params.id);
-    const lead = leads.find((l) => l.id === id);
+    const id = Number(String(req.params.id ?? "").trim());
+    const lead = Number.isFinite(id) ? leads.find((l) => l.id === id) : undefined;
     if (!lead) {
       res.status(404).json({ detail: "Lead not found" });
       return;
@@ -609,8 +609,10 @@ export function createLeadPilotApiApp() {
   });
 
   app.patch("/api/leads/:id", (req, res) => {
-    const id = Number(req.params.id);
-    const index = leads.findIndex((l) => l.id === id);
+    const id = Number(String(req.params.id ?? "").trim());
+    const index = Number.isFinite(id)
+      ? leads.findIndex((l) => l.id === id)
+      : -1;
     if (index === -1) {
       res.status(404).json({ detail: "Lead not found" });
       return;
@@ -648,8 +650,10 @@ export function createLeadPilotApiApp() {
       return;
     }
 
-    const id = Number(req.params.id);
-    const index = leads.findIndex((l) => l.id === id);
+    const id = Number(String(req.params.id ?? "").trim());
+    const index = Number.isFinite(id)
+      ? leads.findIndex((l) => l.id === id)
+      : -1;
     if (index === -1) {
       res.status(404).json({ detail: "Lead not found" });
       return;
@@ -684,6 +688,10 @@ export function createLeadPilotApiApp() {
     leads[index] = updated;
     saveLeads(leads);
     res.json(updated);
+  });
+
+  app.use("/api", (_req, res) => {
+    res.status(404).json({ detail: "API route not found" });
   });
 
   return app;

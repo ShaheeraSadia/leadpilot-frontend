@@ -28,6 +28,22 @@ interface FollowUpDrawerProps {
 
 const ALL_STATUSES: LeadStatus[] = ["new", "contacted", "won", "lost"];
 
+function buildFallbackLeadDetail(lead: Lead): Lead {
+  const fallbackMessages =
+    lead.messages && lead.messages.length > 0
+      ? lead.messages
+      : lead.need
+      ? [{ role: "user" as const, content: lead.need, ts: lead.created }]
+      : [];
+
+  return {
+    ...lead,
+    email_subject: lead.email_subject || lead.draft_subject || "",
+    email_body: lead.email_body || lead.draft_body || "",
+    messages: fallbackMessages,
+  };
+}
+
 export default function FollowUpDrawer({
   apiBaseUrl,
   simulateError = false,
@@ -36,7 +52,9 @@ export default function FollowUpDrawer({
   onClose,
   onLeadUpdated,
 }: FollowUpDrawerProps) {
-  const [detail, setDetail] = useState<Lead | null>(initialLead);
+  const [detail, setDetail] = useState<Lead | null>(() =>
+    initialLead ? buildFallbackLeadDetail(initialLead) : null
+  );
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [isRequalifying, setIsRequalifying] = useState(false);
@@ -46,8 +64,23 @@ export default function FollowUpDrawer({
     text: string;
   } | null>(null);
 
+  const initialLeadRef = React.useRef<Lead | null>(initialLead);
+  initialLeadRef.current = initialLead;
+
   useEffect(() => {
-    setDetail(initialLead);
+    if (initialLead && leadId !== null && initialLead.id === leadId) {
+      setDetail((prev) => {
+        if (prev && prev.id === initialLead.id) {
+          return buildFallbackLeadDetail({ ...prev, ...initialLead });
+        }
+        return buildFallbackLeadDetail(initialLead);
+      });
+    }
+  }, [initialLead, leadId]);
+
+  useEffect(() => {
+    const cachedLead = initialLeadRef.current;
+    setDetail(cachedLead ? buildFallbackLeadDetail(cachedLead) : null);
     setFeedback(null);
     setCopied(false);
 
@@ -59,14 +92,23 @@ export default function FollowUpDrawer({
     apiRequest<Lead>(apiBaseUrl, `/api/leads/${leadId}`)
       .then((data) => {
         if (!cancelled) {
-          setDetail((prev) => ({
-            ...(prev ?? ({} as Lead)),
-            ...data,
-          }));
+          setDetail((prev) =>
+            buildFallbackLeadDetail({
+              ...(prev ?? ({} as Lead)),
+              ...data,
+            })
+          );
         }
       })
       .catch((err) => {
         if (!cancelled) {
+          const fallback = initialLeadRef.current;
+          if (fallback && fallback.id === leadId) {
+            setDetail((prev) =>
+              buildFallbackLeadDetail(prev?.id === leadId ? prev : fallback)
+            );
+            return;
+          }
           const msg =
             err instanceof ApiHttpError
               ? err.detail
@@ -81,7 +123,7 @@ export default function FollowUpDrawer({
     return () => {
       cancelled = true;
     };
-  }, [apiBaseUrl, leadId, initialLead]);
+  }, [apiBaseUrl, leadId]);
 
   useEffect(() => {
     if (leadId === null) return;
