@@ -1,0 +1,6 @@
+{
+  "name": "LeadPilot",
+  "description": "AI-powered lead intake, qualification scoring, and follow-up pipeline workspace.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
