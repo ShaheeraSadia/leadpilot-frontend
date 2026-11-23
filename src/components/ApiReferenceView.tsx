@@ -1,10 +1,13 @@
 import React, { useState } from "react";
-import { Check, Server } from "lucide-react";
+import { AlertTriangle, Check, Server } from "lucide-react";
 import { DEFAULT_LOCAL_FASTAPI_URL } from "../types/lead";
 
 interface ApiReferenceViewProps {
   apiBaseUrl: string;
   onChangeApiBaseUrl: (nextUrl: string) => void;
+  simulateError: boolean;
+  onToggleSimulateError: (next: boolean) => void;
+  onPreviewErrorCard: () => void;
 }
 
 const ENDPOINTS = [
@@ -49,6 +52,9 @@ const ENDPOINTS = [
 export default function ApiReferenceView({
   apiBaseUrl,
   onChangeApiBaseUrl,
+  simulateError,
+  onToggleSimulateError,
+  onPreviewErrorCard,
 }: ApiReferenceViewProps) {
   const [customUrl, setCustomUrl] = useState(
     apiBaseUrl || DEFAULT_LOCAL_FASTAPI_URL
@@ -74,7 +80,7 @@ export default function ApiReferenceView({
   return (
     <div className="space-y-6">
       {/* Backend Target Configuration */}
-      <section className="rounded-lg border border-slate-200 bg-white p-6">
+      <section className="rounded-lg border border-slate-200 bg-white p-4 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-200 pb-4">
           <div>
             <h2 className="text-lg font-semibold tracking-tight text-slate-900">
@@ -142,18 +148,18 @@ export default function ApiReferenceView({
               Point the frontend directly to Muhammad Saqlain&apos;s local
               Python FastAPI backend (CORS open).
             </p>
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="mt-3 flex flex-col gap-2 sm:flex-row">
               <input
                 type="url"
                 value={customUrl}
                 onChange={(e) => setCustomUrl(e.target.value)}
                 placeholder="http://127.0.0.1:8002"
                 aria-label="FastAPI base URL"
-                className="min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-3 py-1.5 font-mono text-xs text-slate-900 focus:border-indigo-600 focus:outline-none"
+                className="h-9 min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-3 font-mono text-xs text-slate-900 focus:border-indigo-600 focus:outline-none"
               />
               <button
                 type="submit"
-                className="whitespace-nowrap shrink-0 rounded-md bg-slate-900 px-3.5 py-1.5 text-xs font-medium text-white hover:bg-slate-800"
+                className="h-9 whitespace-nowrap shrink-0 rounded-md bg-slate-900 px-3.5 text-xs font-medium text-white hover:bg-slate-800"
               >
                 {!isBuiltIn ? "Update URL" : "Connect FastAPI"}
               </button>
@@ -162,9 +168,58 @@ export default function ApiReferenceView({
         </div>
       </section>
 
+      {/* Demo Error Simulation (HTTP 502) */}
+      <section className="rounded-lg border border-slate-200 bg-white p-4 sm:p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <AlertTriangle
+                className="h-4 w-4 text-rose-600"
+                aria-hidden="true"
+              />
+              <h2 className="text-base font-semibold tracking-tight text-slate-900">
+                Simulate Qualification Error (HTTP 502)
+              </h2>
+            </div>
+            <p className="text-xs leading-relaxed text-slate-600">
+              Toggle simulated 502 responses on{" "}
+              <span className="font-mono">POST /api/leads</span> and{" "}
+              <span className="font-mono">POST /api/leads/&#123;id&#125;/requalify</span>{" "}
+              or preview the Qualification Failed retry state directly.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 shrink-0">
+            <button
+              type="button"
+              role="switch"
+              aria-checked={simulateError}
+              onClick={() => onToggleSimulateError(!simulateError)}
+              className={`inline-flex h-9 items-center gap-2 rounded-md border px-3.5 text-xs font-medium transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-indigo-600 whitespace-nowrap shrink-0 ${
+                simulateError
+                  ? "border-rose-300 bg-rose-50 text-rose-800"
+                  : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+              }`}
+            >
+              <span>
+                Simulate Error: {simulateError ? "On (502)" : "Off"}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={onPreviewErrorCard}
+              className="inline-flex h-9 items-center rounded-md bg-rose-700 px-3.5 text-xs font-medium text-white transition-colors duration-150 hover:bg-rose-800 focus-visible:outline-2 focus-visible:outline-rose-700 whitespace-nowrap shrink-0"
+            >
+              Preview Error Card
+            </button>
+          </div>
+        </div>
+      </section>
+
       {/* Spec Endpoints Table */}
       <section className="rounded-lg border border-slate-200 bg-white">
-        <div className="border-b border-slate-200 p-5">
+        <div className="border-b border-slate-200 p-4 sm:p-5">
           <h2 className="text-lg font-semibold tracking-tight text-slate-900">
             LeadPilot API Contract (Draft v1)
           </h2>
@@ -178,13 +233,13 @@ export default function ApiReferenceView({
           {ENDPOINTS.map((ep) => (
             <div
               key={`${ep.method}-${ep.path}`}
-              className="flex flex-col gap-2 px-5 py-4 sm:flex-row sm:items-baseline sm:gap-6"
+              className="flex flex-col gap-2 px-4 py-4 sm:flex-row sm:items-baseline sm:gap-6 sm:px-5"
             >
-              <div className="flex w-64 shrink-0 items-center gap-3">
-                <span className="w-12 font-mono text-xs font-semibold text-indigo-700">
+              <div className="flex min-w-0 items-center gap-3 sm:w-64 sm:shrink-0">
+                <span className="w-12 shrink-0 font-mono text-xs font-semibold text-indigo-700">
                   {ep.method}
                 </span>
-                <span className="font-mono text-xs text-slate-900">
+                <span className="break-all font-mono text-xs text-slate-900 sm:break-normal">
                   {ep.path}
                 </span>
               </div>

@@ -22,7 +22,7 @@ interface PipelineStatusChartProps {
 interface StatusDatum {
   status: LeadStatus;
   label: string;
-  shortLabel: string;
+  axisLabel: string;
   count: number;
   percent: number;
   color: string;
@@ -30,13 +30,13 @@ interface StatusDatum {
 
 const STATUS_META: Array<{
   status: LeadStatus;
-  shortLabel: string;
+  axisLabel: string;
   color: string;
 }> = [
-  { status: "new", shortLabel: "Draft Ready", color: "#4f46e5" },
-  { status: "contacted", shortLabel: "Follow-Up Sent", color: "#d97706" },
-  { status: "won", shortLabel: "Won", color: "#16a34a" },
-  { status: "lost", shortLabel: "Lost", color: "#64748b" },
+  { status: "new", axisLabel: "New", color: "#4f46e5" },
+  { status: "contacted", axisLabel: "Contacted", color: "#d97706" },
+  { status: "won", axisLabel: "Won", color: "#16a34a" },
+  { status: "lost", axisLabel: "Lost", color: "#64748b" },
 ];
 
 function StatusTooltip({
@@ -90,7 +90,7 @@ export default function PipelineStatusChart({
       return {
         status: meta.status,
         label: DEMO_STATUS_LABELS[meta.status],
-        shortLabel: meta.shortLabel,
+        axisLabel: meta.axisLabel,
         count,
         percent,
         color: meta.color,
@@ -112,7 +112,7 @@ export default function PipelineStatusChart({
       aria-label="Pipeline health by lead status"
       className="rounded-lg border border-slate-200 bg-white"
     >
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-5 py-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-4 sm:px-5">
         <div>
           <h2 className="text-base font-semibold tracking-tight text-slate-900">
             Pipeline Health by Status
@@ -137,12 +137,12 @@ export default function PipelineStatusChart({
 
       {isLoading ? (
         <div className="grid grid-cols-1 divide-y divide-slate-200 lg:grid-cols-12 lg:divide-x lg:divide-y-0">
-          <div className="p-5 lg:col-span-7">
+          <div className="p-4 sm:p-5 lg:col-span-7">
             <div className="h-52 w-full animate-pulse rounded bg-slate-100" />
           </div>
           <div className="divide-y divide-slate-200 lg:col-span-5">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="flex items-center justify-between px-5 py-4">
+              <div key={i} className="flex items-center justify-between px-4 py-4 sm:px-5">
                 <div className="h-4 w-32 animate-pulse rounded bg-slate-200" />
                 <div className="h-4 w-12 animate-pulse rounded bg-slate-100" />
               </div>
@@ -152,12 +152,12 @@ export default function PipelineStatusChart({
       ) : (
         <div className="grid grid-cols-1 divide-y divide-slate-200 lg:grid-cols-12 lg:divide-x lg:divide-y-0">
           {/* Bar Chart */}
-          <div className="p-5 lg:col-span-7">
+          <div className="p-4 sm:p-5 lg:col-span-7">
             <div className="h-52 w-full min-w-0">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={data}
-                  margin={{ top: 8, right: 12, left: -16, bottom: 0 }}
+                  margin={{ top: 8, right: 8, left: -20, bottom: 0 }}
                 >
                   <CartesianGrid
                     strokeDasharray="3 3"
@@ -165,7 +165,8 @@ export default function PipelineStatusChart({
                     stroke="#e2e8f0"
                   />
                   <XAxis
-                    dataKey="shortLabel"
+                    dataKey="axisLabel"
+                    interval={0}
                     tick={{ fill: "#475569", fontSize: 12 }}
                     axisLine={{ stroke: "#cbd5e1" }}
                     tickLine={false}
@@ -217,7 +218,7 @@ export default function PipelineStatusChart({
                   key={item.status}
                   type="button"
                   onClick={() => handleToggleStatus(item.status)}
-                  className={`flex w-full items-center justify-between gap-4 px-5 py-3.5 text-left transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-indigo-600 ${
+                  className={`flex w-full items-center justify-between gap-4 px-4 py-3.5 text-left transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-indigo-600 sm:px-5 ${
                     isSelected
                       ? "bg-indigo-50/60"
                       : "bg-white hover:bg-slate-50"

@@ -47,6 +47,7 @@ export default function App() {
 
   // Uses VITE_API_URL / NEXT_PUBLIC_API_URL when set, otherwise built-in /api/*
   const [apiBaseUrl, setApiBaseUrl] = useState(CONFIGURED_API_BASE_URL);
+  const [simulateError, setSimulateError] = useState(false);
 
   const [leads, setLeads] = useState<Lead[]>([]);
   const [stats, setStats] = useState<LeadStats>(EMPTY_STATS);
@@ -124,6 +125,7 @@ export default function App() {
     try {
       const scored = await apiRequest<Lead>(apiBaseUrl, "/api/leads", {
         method: "POST",
+        headers: simulateError ? { "X-Simulate-Error": "true" } : undefined,
         body: JSON.stringify(qualificationError.lastPayload),
       });
       await handleLeadScored(scored);
@@ -172,6 +174,30 @@ export default function App() {
         block: "center",
       });
     }, 60);
+  };
+
+  const handlePreviewErrorCard = () => {
+    setQualificationError({
+      status: 502,
+      message: "Simulated 502: The AI qualification service failed, please try again.",
+      lastPayload: {
+        name: "Nadia Qureshi",
+        email: "nadia@nordicpay.co",
+        phone: "+44 20 7946 0821",
+        company: "NordicPay",
+        service: "B2B onboarding redesign & conversion analytics",
+        website: "https://nordicpay.co",
+        notes:
+          "We need to cut merchant drop-off during KYC setup ahead of our Series A partner rollout next month.",
+        message:
+          "B2B onboarding redesign & conversion analytics — We need to cut merchant drop-off during KYC setup ahead of our Series A partner rollout next month.",
+        budget: "$3,200 per month",
+        timeline: "This month",
+        source: "form",
+      },
+    });
+    setActiveTab("workspace");
+    setMobileNavOpen(false);
   };
 
   const navItems: Array<{
@@ -288,13 +314,13 @@ export default function App() {
       {/* Main Content Shell */}
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Top Bar Contract: Breadcrumb on left, 1 primary action on right */}
-        <header className="flex h-16 items-center justify-between gap-6 border-b border-slate-200 bg-white px-5 lg:px-8">
+        <header className="flex h-14 items-center justify-between gap-4 border-b border-slate-200 bg-white px-4 sm:h-16 sm:gap-6 sm:px-6 lg:px-8">
           <div className="flex min-w-0 items-center gap-3">
             <button
               type="button"
               onClick={() => setMobileNavOpen(true)}
               aria-label="Open navigation menu"
-              className="rounded-md border border-slate-200 p-2 text-slate-600 hover:bg-slate-100 lg:hidden"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-slate-200 text-slate-600 hover:bg-slate-100 lg:hidden"
             >
               <Menu className="h-4 w-4" aria-hidden="true" />
             </button>
@@ -317,7 +343,7 @@ export default function App() {
           <button
             type="button"
             onClick={handleFocusNewLead}
-            className="whitespace-nowrap shrink-0 inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-4 py-2 text-xs font-medium text-white transition-colors duration-150 hover:bg-indigo-700 focus-visible:outline-2 focus-visible:outline-indigo-600"
+            className="whitespace-nowrap shrink-0 inline-flex h-10 items-center gap-1.5 rounded-md bg-indigo-600 px-3.5 text-xs font-medium text-white transition-colors duration-150 hover:bg-indigo-700 focus-visible:outline-2 focus-visible:outline-indigo-600 sm:h-9 sm:px-4"
           >
             <Plus className="h-3.5 w-3.5" aria-hidden="true" />
             <span>New Lead</span>
@@ -325,7 +351,7 @@ export default function App() {
         </header>
 
         {/* Main Viewport */}
-        <main className="mx-auto w-full max-w-[1280px] flex-1 space-y-6 p-5 lg:p-8">
+        <main className="mx-auto w-full max-w-[1280px] flex-1 space-y-5 p-4 sm:space-y-6 sm:p-6 lg:p-8">
           {/* Global Load Error */}
           {loadError && (
             <div
@@ -347,51 +373,51 @@ export default function App() {
           {activeTab !== "api" && (
             <section
               aria-label="Pipeline summary statistics"
-              className="grid grid-cols-2 divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white sm:grid-cols-3 sm:divide-x sm:divide-y-0 lg:grid-cols-6"
+              className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-slate-200 bg-slate-200 sm:grid-cols-3 lg:grid-cols-6"
             >
-              <div className="px-5 py-4">
+              <div className="bg-white px-4 py-3.5 sm:px-5 sm:py-4">
                 <div className="text-xs font-medium text-slate-500">
                   Total Leads
                 </div>
-                <div className="mt-1 font-mono tabular-nums text-2xl font-semibold text-slate-900">
+                <div className="mt-1 font-mono tabular-nums text-xl font-semibold text-slate-900 sm:text-2xl">
                   {stats.total}
                 </div>
               </div>
-              <div className="px-5 py-4">
+              <div className="bg-white px-4 py-3.5 sm:px-5 sm:py-4">
                 <div className="text-xs font-medium text-emerald-700">
                   Hot (70+)
                 </div>
-                <div className="mt-1 font-mono tabular-nums text-2xl font-semibold text-slate-900">
+                <div className="mt-1 font-mono tabular-nums text-xl font-semibold text-slate-900 sm:text-2xl">
                   {stats.hot}
                 </div>
               </div>
-              <div className="px-5 py-4">
+              <div className="bg-white px-4 py-3.5 sm:px-5 sm:py-4">
                 <div className="text-xs font-medium text-amber-700">
                   Warm (40–69)
                 </div>
-                <div className="mt-1 font-mono tabular-nums text-2xl font-semibold text-slate-900">
+                <div className="mt-1 font-mono tabular-nums text-xl font-semibold text-slate-900 sm:text-2xl">
                   {stats.warm}
                 </div>
               </div>
-              <div className="px-5 py-4">
+              <div className="bg-white px-4 py-3.5 sm:px-5 sm:py-4">
                 <div className="text-xs font-medium text-sky-700">
                   Cold (&lt;40)
                 </div>
-                <div className="mt-1 font-mono tabular-nums text-2xl font-semibold text-slate-900">
+                <div className="mt-1 font-mono tabular-nums text-xl font-semibold text-slate-900 sm:text-2xl">
                   {stats.cold}
                 </div>
               </div>
-              <div className="px-5 py-4">
+              <div className="bg-white px-4 py-3.5 sm:px-5 sm:py-4">
                 <div className="text-xs font-medium text-indigo-700">
                   Draft Ready
                 </div>
-                <div className="mt-1 font-mono tabular-nums text-2xl font-semibold text-slate-900">
+                <div className="mt-1 font-mono tabular-nums text-xl font-semibold text-slate-900 sm:text-2xl">
                   {stats.new}
                 </div>
               </div>
-              <div className="px-5 py-4">
+              <div className="bg-white px-4 py-3.5 sm:px-5 sm:py-4">
                 <div className="text-xs font-medium text-slate-600">Won</div>
-                <div className="mt-1 font-mono tabular-nums text-2xl font-semibold text-slate-900">
+                <div className="mt-1 font-mono tabular-nums text-xl font-semibold text-slate-900 sm:text-2xl">
                   {stats.won}
                 </div>
               </div>
@@ -405,6 +431,7 @@ export default function App() {
                 <div className="lg:col-span-7">
                   <LeadIntakeForm
                     apiBaseUrl={apiBaseUrl}
+                    simulateError={simulateError}
                     onLeadScored={handleLeadScored}
                     onQualificationError={handleQualificationError}
                     inputRef={intakeNameInputRef}
@@ -487,6 +514,9 @@ export default function App() {
             <ApiReferenceView
               apiBaseUrl={apiBaseUrl}
               onChangeApiBaseUrl={(nextUrl) => setApiBaseUrl(nextUrl)}
+              simulateError={simulateError}
+              onToggleSimulateError={setSimulateError}
+              onPreviewErrorCard={handlePreviewErrorCard}
             />
           )}
         </main>
@@ -495,6 +525,7 @@ export default function App() {
       {/* Follow-Up Status Drawer */}
       <FollowUpDrawer
         apiBaseUrl={apiBaseUrl}
+        simulateError={simulateError}
         leadId={drawerLeadId}
         initialLead={drawerInitialLead}
         onClose={() => setDrawerLeadId(null)}

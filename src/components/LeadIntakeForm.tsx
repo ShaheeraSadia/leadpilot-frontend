@@ -11,6 +11,7 @@ import {
 
 interface LeadIntakeFormProps {
   apiBaseUrl: string;
+  simulateError?: boolean;
   onLeadScored: (lead: Lead) => void;
   onQualificationError: (error: {
     status: number;
@@ -47,6 +48,7 @@ const DEMO_SAMPLE: IntakeFormValues = {
 
 export default function LeadIntakeForm({
   apiBaseUrl,
+  simulateError = false,
   onLeadScored,
   onQualificationError,
   inputRef,
@@ -93,6 +95,7 @@ export default function LeadIntakeForm({
     try {
       const scored = await apiRequest<Lead>(apiBaseUrl, "/api/leads", {
         method: "POST",
+        headers: simulateError ? { "X-Simulate-Error": "true" } : undefined,
         body: JSON.stringify(payload),
       });
       onLeadScored(scored);
@@ -123,7 +126,7 @@ export default function LeadIntakeForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex h-full flex-col justify-between rounded-lg border border-slate-200 bg-white p-6"
+      className="flex h-full flex-col justify-between rounded-lg border border-slate-200 bg-white p-4 sm:p-6"
     >
       <div className="space-y-5">
         <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 pb-4">
@@ -300,10 +303,10 @@ export default function LeadIntakeForm({
           <div>
             <label
               htmlFor="intake-website"
-              className="mb-1.5 flex items-baseline justify-between gap-2 text-xs font-medium text-slate-700"
+              className="mb-1.5 flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5 text-xs font-medium text-slate-700"
             >
               <span>Website</span>
-              <span className="font-normal text-slate-400">
+              <span className="text-[11px] font-normal text-slate-400">
                 Optional · pending backend support
               </span>
             </label>
@@ -338,14 +341,14 @@ export default function LeadIntakeForm({
         </div>
       </div>
 
-      <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4">
+      <div className="mt-5 flex flex-col gap-3 border-t border-slate-200 pt-4 sm:flex-row sm:items-center sm:justify-between">
         <span className="text-xs text-slate-500">
           Requires email, phone, or project message
         </span>
         <button
           type="submit"
           disabled={isSubmitting}
-          className="whitespace-nowrap shrink-0 inline-flex items-center justify-center gap-2 rounded-md bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white transition-colors duration-150 hover:bg-indigo-700 focus-visible:outline-2 focus-visible:outline-indigo-600 disabled:cursor-not-allowed disabled:opacity-60"
+          className="whitespace-nowrap shrink-0 inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-md bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white transition-colors duration-150 hover:bg-indigo-700 focus-visible:outline-2 focus-visible:outline-indigo-600 disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-0 sm:w-auto"
         >
           {isSubmitting ? (
             <>

@@ -46,7 +46,7 @@ export default function QualificationResultCard({
 }: QualificationResultCardProps) {
   if (aiError) {
     return (
-      <div className="flex h-full flex-col justify-between rounded-lg border border-rose-200 bg-rose-50/70 p-6">
+      <div className="flex h-full flex-col justify-between rounded-lg border border-rose-200 bg-rose-50/70 p-4 sm:p-6">
         <div className="space-y-3">
           <div className="flex items-center justify-between border-b border-rose-200 pb-4">
             <div className="flex items-center gap-2 text-rose-900">
@@ -88,7 +88,7 @@ export default function QualificationResultCard({
 
   if (!lead) {
     return (
-      <div className="flex h-full flex-col justify-center rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center">
+      <div className="flex h-full flex-col justify-center rounded-lg border border-dashed border-slate-300 bg-white p-6 text-center sm:p-8">
         <p className="text-base font-semibold text-slate-800">
           Qualification Result Ready
         </p>
@@ -125,12 +125,12 @@ export default function QualificationResultCard({
   const clampedScore = Math.max(0, Math.min(100, lead.score));
 
   return (
-    <div className="flex h-full flex-col justify-between rounded-lg border border-slate-200 bg-white p-6">
+    <div className="flex h-full flex-col justify-between rounded-lg border border-slate-200 bg-white p-4 sm:p-6">
       <div className="space-y-5">
         {/* Header */}
-        <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-200 pb-4">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 text-xs text-slate-500">
+        <div className="flex items-start justify-between gap-4 border-b border-slate-200 pb-4">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500">
               <span>Lead #{lead.id}</span>
               <span aria-hidden="true">·</span>
               <span>{DEMO_STATUS_LABELS[lead.status]}</span>
@@ -139,7 +139,7 @@ export default function QualificationResultCard({
                 {formatUnixTimestamp(lead.updated)}
               </span>
             </div>
-            <h2 className="mt-1 truncate text-xl font-semibold tracking-tight text-slate-900">
+            <h2 className="mt-1 truncate text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">
               {lead.name}
             </h2>
             <p className="mt-0.5 truncate text-sm text-slate-600">
@@ -149,7 +149,7 @@ export default function QualificationResultCard({
           </div>
 
           <div className="text-right shrink-0">
-            <div className="font-mono tabular-nums text-3xl font-semibold tracking-tight text-slate-900">
+            <div className="font-mono tabular-nums text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
               {clampedScore}
               <span className="text-sm font-normal text-slate-400">/100</span>
             </div>
@@ -160,9 +160,9 @@ export default function QualificationResultCard({
         </div>
 
         {/* Tier Threshold Indicator */}
-        <div className="grid grid-cols-3 divide-x divide-slate-200 rounded-md border border-slate-200 bg-slate-50/70 text-center text-xs">
+        <div className="grid grid-cols-3 divide-x divide-slate-200 rounded-md border border-slate-200 bg-slate-50/70 text-center text-[11px] sm:text-xs">
           <div
-            className={`px-3 py-2 ${
+            className={`px-2 py-2 sm:px-3 ${
               lead.tier === "cold"
                 ? "bg-sky-50 font-semibold text-sky-800"
                 : "text-slate-500"
@@ -171,7 +171,7 @@ export default function QualificationResultCard({
             Cold <span className="font-mono tabular-nums">(&lt;40)</span>
           </div>
           <div
-            className={`px-3 py-2 ${
+            className={`px-2 py-2 sm:px-3 ${
               lead.tier === "warm"
                 ? "bg-amber-50 font-semibold text-amber-800"
                 : "text-slate-500"
@@ -180,7 +180,7 @@ export default function QualificationResultCard({
             Warm <span className="font-mono tabular-nums">(40–69)</span>
           </div>
           <div
-            className={`px-3 py-2 ${
+            className={`px-2 py-2 sm:px-3 ${
               lead.tier === "hot"
                 ? "bg-emerald-50 font-semibold text-emerald-800"
                 : "text-slate-500"
@@ -222,7 +222,7 @@ export default function QualificationResultCard({
       </div>
 
       {/* Footer Metadata & Action */}
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4">
+      <div className="mt-6 flex flex-col gap-3 border-t border-slate-200 pt-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
           <span>
             Budget:{" "}
@@ -242,7 +242,7 @@ export default function QualificationResultCard({
         <button
           type="button"
           onClick={() => onInspectFollowUp(lead.id)}
-          className="whitespace-nowrap shrink-0 inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-4 py-2 text-xs font-medium text-slate-800 transition-colors duration-150 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-indigo-600"
+          className="whitespace-nowrap shrink-0 inline-flex min-h-[42px] w-full items-center justify-center gap-1.5 rounded-md border border-slate-300 bg-white px-4 py-2 text-xs font-medium text-slate-800 transition-colors duration-150 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-indigo-600 sm:min-h-0 sm:w-auto"
         >
           <span>Open Follow-Up Drawer</span>
           <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />

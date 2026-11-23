@@ -14,6 +14,7 @@ export interface Lead {
   email: string;
   phone?: string;
   company: string;
+  service?: string;
   website?: string;
   need: string;
   budget: string;
@@ -24,6 +25,8 @@ export interface Lead {
   next_step: string;
   email_subject: string;
   email_body: string;
+  draft_subject?: string;
+  draft_body?: string;
   status: LeadStatus;
   qualified: number;
   created: number;
@@ -57,7 +60,9 @@ export interface LeadPayload {
   email: string;
   phone: string;
   company: string;
+  service?: string;
   website?: string;
+  notes?: string;
   message: string;
   budget: string;
   timeline: string;
@@ -73,9 +78,9 @@ export const CONFIGURED_API_BASE_URL = (
 ).trim();
 
 export function mapFormToLeadPayload(values: IntakeFormValues): LeadPayload {
-  const combinedMessage = [values.serviceNeeded.trim(), values.projectNotes.trim()]
-    .filter(Boolean)
-    .join(" — ");
+  const service = values.serviceNeeded.trim();
+  const notes = values.projectNotes.trim();
+  const combinedMessage = [service, notes].filter(Boolean).join(" — ");
 
   const payload: LeadPayload = {
     name: values.fullName.trim(),
@@ -88,6 +93,12 @@ export function mapFormToLeadPayload(values: IntakeFormValues): LeadPayload {
     source: "form",
   };
 
+  if (service) {
+    payload.service = service;
+  }
+  if (notes) {
+    payload.notes = notes;
+  }
   if (values.website.trim()) {
     payload.website = values.website.trim();
   }
