@@ -10,13 +10,16 @@ import {
 import ApiReferenceView from "./components/ApiReferenceView";
 import FollowUpDrawer from "./components/FollowUpDrawer";
 import LeadIntakeForm from "./components/LeadIntakeForm";
+import PipelineStatusChart from "./components/PipelineStatusChart";
 import PipelineTable from "./components/PipelineTable";
 import QualificationResultCard from "./components/QualificationResultCard";
 import {
   ApiHttpError,
+  CONFIGURED_API_BASE_URL,
   Lead,
   LeadPayload,
   LeadStats,
+  LeadStatus,
   LeadTier,
   apiRequest,
 } from "./types/lead";
@@ -42,12 +45,13 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<WorkspaceTab>("workspace");
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
-  // "" means built-in Express + Gemini server (/api/*); otherwise e.g. http://127.0.0.1:8002
-  const [apiBaseUrl, setApiBaseUrl] = useState("");
+  // Uses VITE_API_URL / NEXT_PUBLIC_API_URL when set, otherwise built-in /api/*
+  const [apiBaseUrl, setApiBaseUrl] = useState(CONFIGURED_API_BASE_URL);
 
   const [leads, setLeads] = useState<Lead[]>([]);
   const [stats, setStats] = useState<LeadStats>(EMPTY_STATS);
   const [activeTier, setActiveTier] = useState<"all" | LeadTier>("all");
+  const [activeStatus, setActiveStatus] = useState<"all" | LeadStatus>("all");
   const [isLoadingLeads, setIsLoadingLeads] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -424,11 +428,22 @@ export default function App() {
                 </div>
               </div>
 
+              {/* Pipeline Health Visualization */}
+              <PipelineStatusChart
+                leads={leads}
+                activeTier={activeTier}
+                activeStatus={activeStatus}
+                onStatusSelect={setActiveStatus}
+                isLoading={isLoadingLeads}
+              />
+
               {/* Pipeline Table */}
               <PipelineTable
                 leads={leads}
                 activeTier={activeTier}
                 onTierChange={setActiveTier}
+                activeStatus={activeStatus}
+                onStatusChange={setActiveStatus}
                 onSelectLead={(lead) => {
                   setLatestScoredLead(lead);
                   setQualificationError(null);
@@ -442,18 +457,30 @@ export default function App() {
           )}
 
           {activeTab === "pipeline" && (
-            <PipelineTable
-              leads={leads}
-              activeTier={activeTier}
-              onTierChange={setActiveTier}
-              onSelectLead={(lead) => {
-                setLatestScoredLead(lead);
-                handleOpenDrawer(lead);
-              }}
-              onAddLeadClick={handleFocusNewLead}
-              isLoading={isLoadingLeads}
-              selectedLeadId={drawerLeadId}
-            />
+            <>
+              <PipelineStatusChart
+                leads={leads}
+                activeTier={activeTier}
+                activeStatus={activeStatus}
+                onStatusSelect={setActiveStatus}
+                isLoading={isLoadingLeads}
+              />
+
+              <PipelineTable
+                leads={leads}
+                activeTier={activeTier}
+                onTierChange={setActiveTier}
+                activeStatus={activeStatus}
+                onStatusChange={setActiveStatus}
+                onSelectLead={(lead) => {
+                  setLatestScoredLead(lead);
+                  handleOpenDrawer(lead);
+                }}
+                onAddLeadClick={handleFocusNewLead}
+                isLoading={isLoadingLeads}
+                selectedLeadId={drawerLeadId}
+              />
+            </>
           )}
 
           {activeTab === "api" && (

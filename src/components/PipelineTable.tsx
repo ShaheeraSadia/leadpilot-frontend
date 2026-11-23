@@ -3,6 +3,7 @@ import { Search, ArrowUpRight, Inbox } from "lucide-react";
 import {
   DEMO_STATUS_LABELS,
   Lead,
+  LeadStatus,
   LeadTier,
   formatUnixTimestamp,
 } from "../types/lead";
@@ -11,6 +12,8 @@ interface PipelineTableProps {
   leads: Lead[];
   activeTier: "all" | LeadTier;
   onTierChange: (tier: "all" | LeadTier) => void;
+  activeStatus?: "all" | LeadStatus;
+  onStatusChange?: (status: "all" | LeadStatus) => void;
   onSelectLead: (lead: Lead) => void;
   onAddLeadClick?: () => void;
   isLoading: boolean;
@@ -27,24 +30,67 @@ export default function PipelineTable({
   leads,
   activeTier,
   onTierChange,
+  activeStatus: controlledStatus,
+  onStatusChange,
   onSelectLead,
   onAddLeadClick,
   isLoading,
   selectedLeadId,
 }: PipelineTableProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [internalStatus, setInternalStatus] = useState<"all" | LeadStatus>("all");
 
-  // Client-side search by name or company per LeadPilot API spec
+  const activeStatus = controlledStatus ?? internalStatus;
+  const setActiveStatus = (nextStatus: "all" | LeadStatus) => {
+    if (onStatusChange) {
+      onStatusChange(nextStatus);
+    } else {
+      setInternalStatus(nextStatus);
+    }
+  };
+
+  const statusCounts = useMemo(() => {
+    const counts: Record<"all" | LeadStatus, number> = {
+      all: leads.length,
+      new: 0,
+      contacted: 0,
+      won: 0,
+      lost: 0,
+    };
+    for (const lead of leads) {
+      counts[lead.status] = (counts[lead.status] ?? 0) + 1;
+    }
+    return counts;
+  }, [leads]);
+
+  const statusFilterOptions: Array<{
+    value: "all" | LeadStatus;
+    label: string;
+  }> = [
+    { value: "all", label: `All statuses (${statusCounts.all})` },
+    { value: "new", label: `${DEMO_STATUS_LABELS.new} · new (${statusCounts.new})` },
+    {
+      value: "contacted",
+      label: `${DEMO_STATUS_LABELS.contacted} · contacted (${statusCounts.contacted})`,
+    },
+    { value: "won", label: `${DEMO_STATUS_LABELS.won} (${statusCounts.won})` },
+    { value: "lost", label: `${DEMO_STATUS_LABELS.lost} (${statusCounts.lost})` },
+  ];
+
+  // Client-side search and status filtering per LeadPilot API spec
   const filteredLeads = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    if (!q) return leads;
-    return leads.filter(
-      (lead) =>
+    return leads.filter((lead) => {
+      const matchesStatus =
+        activeStatus === "all" || lead.status === activeStatus;
+      const matchesQuery =
+        !q ||
         lead.name.toLowerCase().includes(q) ||
         lead.company.toLowerCase().includes(q) ||
-        lead.email.toLowerCase().includes(q)
-    );
-  }, [leads, searchQuery]);
+        lead.email.toLowerCase().includes(q);
+      return matchesStatus && matchesQuery;
+    });
+  }, [leads, activeStatus, searchQuery]);
 
   return (
     <section className="rounded-lg border border-slate-200 bg-white">
@@ -65,7 +111,7 @@ export default function PipelineTable({
           <div
             role="tablist"
             aria-label="Filter leads by tier"
-            className="inline-flex items-center gap-1 rounded-md bg-slate-100 p-1"
+            className="inline-flex h-9 items-center gap-1 rounded-md bg-slate-100 p-1"
           >
             {(["all", "hot", "warm", "cold"] as const).map((tier) => {
               const isActive = activeTier === tier;
@@ -76,7 +122,7 @@ export default function PipelineTable({
                   role="tab"
                   aria-selected={isActive}
                   onClick={() => onTierChange(tier)}
-                  className={`whitespace-nowrap shrink-0 rounded px-3 py-1.5 text-xs font-medium capitalize transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-indigo-600 ${
+                  className={`whitespace-nowrap shrink-0 rounded px-3 py-1 text-xs font-medium capitalize transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-indigo-600 ${
                     isActive
                       ? "bg-white text-slate-900 shadow-xs"
                       : "text-slate-600 hover:text-slate-900"
@@ -86,6 +132,24 @@ export default function PipelineTable({
                 </button>
               );
             })}
+          </div>
+
+          {/* Status Dropdown Filter */}
+          <div>
+            <select
+              value={activeStatus}
+              onChange={(e) =>
+                setActiveStatus(e.target.value as "all" | LeadStatus)
+              }
+              aria-label="Filter leads by status"
+              className="h-9 rounded-md border border-slate-300 bg-white px-3 text-xs font-medium text-slate-700 focus:border-indigo-600 focus:outline-none"
+            >
+              {statusFilterOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Client-side search */}
@@ -100,7 +164,7 @@ export default function PipelineTable({
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search name or company..."
               aria-label="Search leads by name or company"
-              className="w-full rounded-md border border-slate-300 bg-white py-1.5 pl-8 pr-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-indigo-600 focus:outline-none"
+              className="h-9 w-full rounded-md border border-slate-300 bg-white pl-8 pr-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-indigo-600 focus:outline-none"
             />
           </div>
         </div>
@@ -165,10 +229,12 @@ export default function PipelineTable({
                     </p>
                     <p className="mt-1 text-xs text-slate-500">
                       {searchQuery
-                        ? `No leads matched "${searchQuery}". Try clearing your search query or switching tiers.`
+                        ? `No leads matched "${searchQuery}". Try clearing your search query or adjusting filters.`
+                        : activeStatus !== "all" || activeTier !== "all"
+                        ? "No leads match the selected tier and status filters."
                         : "Submit a new lead using the intake form to qualify and score it."}
                     </p>
-                    <div className="mt-4 flex items-center gap-2">
+                    <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
                       {searchQuery && (
                         <button
                           type="button"
@@ -176,6 +242,15 @@ export default function PipelineTable({
                           className="whitespace-nowrap shrink-0 rounded-md border border-slate-300 bg-white px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
                         >
                           Clear Search
+                        </button>
+                      )}
+                      {activeStatus !== "all" && (
+                        <button
+                          type="button"
+                          onClick={() => setActiveStatus("all")}
+                          className="whitespace-nowrap shrink-0 rounded-md border border-slate-300 bg-white px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                        >
+                          Show All Statuses
                         </button>
                       )}
                       {activeTier !== "all" && (
@@ -187,15 +262,18 @@ export default function PipelineTable({
                           Show All Tiers
                         </button>
                       )}
-                      {onAddLeadClick && !searchQuery && activeTier === "all" && (
-                        <button
-                          type="button"
-                          onClick={onAddLeadClick}
-                          className="whitespace-nowrap shrink-0 rounded-md bg-indigo-600 px-4 py-2 text-xs font-medium text-white hover:bg-indigo-700"
-                        >
-                          Qualify First Lead
-                        </button>
-                      )}
+                      {onAddLeadClick &&
+                        !searchQuery &&
+                        activeTier === "all" &&
+                        activeStatus === "all" && (
+                          <button
+                            type="button"
+                            onClick={onAddLeadClick}
+                            className="whitespace-nowrap shrink-0 rounded-md bg-indigo-600 px-4 py-2 text-xs font-medium text-white hover:bg-indigo-700"
+                          >
+                            Qualify First Lead
+                          </button>
+                        )}
                     </div>
                   </div>
                 </td>

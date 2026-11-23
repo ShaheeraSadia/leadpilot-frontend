@@ -159,19 +159,34 @@ export default function QualificationResultCard({
           </div>
         </div>
 
-        {/* Score Bar */}
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between text-xs text-slate-500">
-            <span>Qualification confidence</span>
-            <span className="font-mono tabular-nums text-slate-700">
-              {clampedScore}%
-            </span>
+        {/* Tier Threshold Indicator */}
+        <div className="grid grid-cols-3 divide-x divide-slate-200 rounded-md border border-slate-200 bg-slate-50/70 text-center text-xs">
+          <div
+            className={`px-3 py-2 ${
+              lead.tier === "cold"
+                ? "bg-sky-50 font-semibold text-sky-800"
+                : "text-slate-500"
+            }`}
+          >
+            Cold <span className="font-mono tabular-nums">(&lt;40)</span>
           </div>
-          <div className="h-2 w-full overflow-hidden rounded-sm bg-slate-100">
-            <div
-              className={`h-full transition-all duration-200 ${tierStyle.bar}`}
-              style={{ width: `${clampedScore}%` }}
-            />
+          <div
+            className={`px-3 py-2 ${
+              lead.tier === "warm"
+                ? "bg-amber-50 font-semibold text-amber-800"
+                : "text-slate-500"
+            }`}
+          >
+            Warm <span className="font-mono tabular-nums">(40–69)</span>
+          </div>
+          <div
+            className={`px-3 py-2 ${
+              lead.tier === "hot"
+                ? "bg-emerald-50 font-semibold text-emerald-800"
+                : "text-slate-500"
+            }`}
+          >
+            Hot <span className="font-mono tabular-nums">(70+)</span>
           </div>
         </div>
 

@@ -66,6 +66,12 @@ export interface LeadPayload {
 
 export const DEFAULT_LOCAL_FASTAPI_URL = "http://127.0.0.1:8002";
 
+export const CONFIGURED_API_BASE_URL = (
+  import.meta.env.VITE_API_URL ||
+  import.meta.env.NEXT_PUBLIC_API_URL ||
+  ""
+).trim();
+
 export function mapFormToLeadPayload(values: IntakeFormValues): LeadPayload {
   const combinedMessage = [values.serviceNeeded.trim(), values.projectNotes.trim()]
     .filter(Boolean)

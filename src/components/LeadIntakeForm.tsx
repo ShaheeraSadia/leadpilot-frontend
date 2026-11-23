@@ -300,9 +300,12 @@ export default function LeadIntakeForm({
           <div>
             <label
               htmlFor="intake-website"
-              className="mb-1.5 block text-xs font-medium text-slate-700"
+              className="mb-1.5 flex items-baseline justify-between gap-2 text-xs font-medium text-slate-700"
             >
-              Website (optional)
+              <span>Website</span>
+              <span className="font-normal text-slate-400">
+                Optional · pending backend support
+              </span>
             </label>
             <input
               id="intake-website"
