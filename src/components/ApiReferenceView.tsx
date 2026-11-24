@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { AlertTriangle, Check, Server } from "lucide-react";
+import { AlertTriangle, Check, Loader2, Server } from "lucide-react";
 import { DEFAULT_LOCAL_FASTAPI_URL } from "../types/lead";
 
 interface ApiReferenceViewProps {
@@ -59,22 +59,66 @@ export default function ApiReferenceView({
   const [customUrl, setCustomUrl] = useState(
     apiBaseUrl || DEFAULT_LOCAL_FASTAPI_URL
   );
-  const [savedNotice, setSavedNotice] = useState(false);
+  const [isCheckingUrl, setIsCheckingUrl] = useState(false);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [savedNotice, setSavedNotice] = useState<string | null>(null);
 
   const isBuiltIn = apiBaseUrl === "";
 
   const handleSelectBuiltIn = () => {
+    setConnectionError(null);
     onChangeApiBaseUrl("");
-    setSavedNotice(true);
-    setTimeout(() => setSavedNotice(false), 1800);
+    setSavedNotice("Switched to built-in /api/*");
+    setTimeout(() => setSavedNotice(null), 2200);
   };
 
-  const handleConnectExternal = (e: React.FormEvent) => {
+  const handleConnectExternal = async (e: React.FormEvent) => {
     e.preventDefault();
-    const trimmed = customUrl.trim() || DEFAULT_LOCAL_FASTAPI_URL;
-    onChangeApiBaseUrl(trimmed);
-    setSavedNotice(true);
-    setTimeout(() => setSavedNotice(false), 1800);
+    const trimmed = (customUrl.trim() || DEFAULT_LOCAL_FASTAPI_URL).replace(
+      /\/+$/,
+      ""
+    );
+    setConnectionError(null);
+    setSavedNotice(null);
+
+    const isMixedContent =
+      typeof window !== "undefined" &&
+      window.location.protocol === "https:" &&
+      trimmed.startsWith("http://");
+
+    if (isMixedContent) {
+      setConnectionError(
+        `Cannot connect to ${trimmed} from an HTTPS preview because browsers block HTTP localhost requests. Run the frontend locally on http://localhost:3000 to test FastAPI, or keep using the Built-in LeadPilot Server here.`
+      );
+      return;
+    }
+
+    setIsCheckingUrl(true);
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 3500);
+      const res = await fetch(`${trimmed}/api/stats`, {
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+
+      if (!res.ok) {
+        setConnectionError(
+          `Server at ${trimmed} responded with HTTP ${res.status}. Verify FastAPI is running properly.`
+        );
+        return;
+      }
+
+      onChangeApiBaseUrl(trimmed);
+      setSavedNotice(`Connected to ${trimmed}`);
+      setTimeout(() => setSavedNotice(null), 2200);
+    } catch {
+      setConnectionError(
+        `Could not reach ${trimmed}. Start FastAPI locally (uvicorn app.main:app --host 127.0.0.1 --port 8002) and check CORS, or stay on the Built-in LeadPilot Server.`
+      );
+    } finally {
+      setIsCheckingUrl(false);
+    }
   };
 
   return (
@@ -94,7 +138,7 @@ export default function ApiReferenceView({
           {savedNotice && (
             <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700">
               <Check className="h-3.5 w-3.5" aria-hidden="true" />
-              Target updated
+              {savedNotice}
             </span>
           )}
         </div>
@@ -116,7 +160,7 @@ export default function ApiReferenceView({
             </div>
             <p className="mt-2 text-xs leading-relaxed text-slate-600">
               Runs all LeadPilot endpoints directly inside this workspace with
-              live AI qualification and persistent JSON demo storage.
+              deterministic scoring and persistent JSON demo storage.
             </p>
             <button
               type="button"
@@ -152,18 +196,64 @@ export default function ApiReferenceView({
               <input
                 type="url"
                 value={customUrl}
-                onChange={(e) => setCustomUrl(e.target.value)}
+                onChange={(e) => {
+                  setCustomUrl(e.target.value);
+                  if (connectionError) setConnectionError(null);
+                }}
                 placeholder="http://127.0.0.1:8002"
                 aria-label="FastAPI base URL"
                 className="h-9 min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-3 font-mono text-xs text-slate-900 focus:border-indigo-600 focus:outline-none"
               />
               <button
                 type="submit"
-                className="h-9 whitespace-nowrap shrink-0 rounded-md bg-slate-900 px-3.5 text-xs font-medium text-white hover:bg-slate-800"
+                disabled={isCheckingUrl}
+                className="inline-flex h-9 items-center justify-center gap-1.5 whitespace-nowrap shrink-0 rounded-md bg-slate-900 px-3.5 text-xs font-medium text-white hover:bg-slate-800 disabled:opacity-60"
               >
-                {!isBuiltIn ? "Update URL" : "Connect FastAPI"}
+                {isCheckingUrl && (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                )}
+                <span>
+                  {isCheckingUrl
+                    ? "Checking..."
+                    : !isBuiltIn
+                    ? "Update URL"
+                    : "Connect FastAPI"}
+                </span>
               </button>
             </div>
+
+            {connectionError && (
+              <div
+                role="alert"
+                className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs leading-relaxed text-amber-900"
+              >
+                <p>{connectionError}</p>
+                <div className="mt-2 flex flex-wrap items-center gap-3">
+                  {!isBuiltIn && (
+                    <button
+                      type="button"
+                      onClick={handleSelectBuiltIn}
+                      className="font-medium text-indigo-700 underline hover:text-indigo-900"
+                    >
+                      Switch back to Built-in Server
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const trimmed = (
+                        customUrl.trim() || DEFAULT_LOCAL_FASTAPI_URL
+                      ).replace(/\/+$/, "");
+                      setConnectionError(null);
+                      onChangeApiBaseUrl(trimmed);
+                    }}
+                    className="font-medium text-amber-900 underline hover:text-amber-700"
+                  >
+                    Save URL anyway
+                  </button>
+                </div>
+              </div>
+            )}
           </form>
         </div>
       </section>
@@ -235,7 +325,7 @@ export default function ApiReferenceView({
               key={`${ep.method}-${ep.path}`}
               className="flex flex-col gap-2 px-4 py-4 sm:flex-row sm:items-baseline sm:gap-6 sm:px-5"
             >
-              <div className="flex min-w-0 items-center gap-3 sm:w-64 sm:shrink-0">
+              <div className="flex min-w-0 items-center gap-3 sm:w-72 sm:shrink-0">
                 <span className="w-12 shrink-0 font-mono text-xs font-semibold text-indigo-700">
                   {ep.method}
                 </span>

@@ -89,10 +89,18 @@ export default function App() {
           return leadsData[0] ?? null;
         });
       } catch (err) {
-        const detail =
-          err instanceof ApiHttpError
-            ? err.detail
-            : "Could not reach the LeadPilot API.";
+        let detail = "Could not reach the LeadPilot API.";
+        if (err instanceof ApiHttpError) {
+          detail = err.detail;
+        } else if (apiBaseUrl) {
+          const isMixedContent =
+            typeof window !== "undefined" &&
+            window.location.protocol === "https:" &&
+            apiBaseUrl.startsWith("http://");
+          detail = isMixedContent
+            ? `Browser blocked connection to ${apiBaseUrl} from an HTTPS page. Test local FastAPI from http://localhost:3000 or switch back to the built-in /api server.`
+            : `Could not reach ${apiBaseUrl}. Make sure the FastAPI server is running on port 8002 with CORS enabled, or switch back to the built-in /api server.`;
+        }
         setLoadError(detail);
       } finally {
         setIsLoadingLeads(false);
@@ -354,14 +362,28 @@ export default function App() {
               role="alert"
               className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800"
             >
-              <span>{loadError}</span>
-              <button
-                type="button"
-                onClick={() => fetchDashboardData(activeTier)}
-                className="whitespace-nowrap shrink-0 rounded-md border border-rose-300 bg-white px-3 py-1.5 text-xs font-medium text-rose-800 hover:bg-rose-100"
-              >
-                Retry Connection
-              </button>
+              <span className="min-w-0 flex-1">{loadError}</span>
+              <div className="flex flex-wrap items-center gap-2 shrink-0">
+                {apiBaseUrl !== "" && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLoadError(null);
+                      setApiBaseUrl("");
+                    }}
+                    className="whitespace-nowrap shrink-0 rounded-md bg-rose-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-rose-800"
+                  >
+                    Use Built-in /api
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => fetchDashboardData(activeTier)}
+                  className="whitespace-nowrap shrink-0 rounded-md border border-rose-300 bg-white px-3 py-1.5 text-xs font-medium text-rose-800 hover:bg-rose-100"
+                >
+                  Retry Connection
+                </button>
+              </div>
             </div>
           )}
 
