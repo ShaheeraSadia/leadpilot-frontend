@@ -68,14 +68,29 @@ export interface LeadPayload {
 
 export const DEFAULT_LOCAL_FASTAPI_URL = "http://127.0.0.1:8002";
 
-export const API_BASE_URL = (
-  import.meta.env.NEXT_PUBLIC_API_URL ||
-  (typeof process !== "undefined" ? process.env?.NEXT_PUBLIC_API_URL : "") ||
-  import.meta.env.VITE_API_URL ||
-  ""
-)
-  .trim()
-  .replace(/\/+$/, "");
+function resolveInitialApiBaseUrl(): string {
+  const configured = (
+    import.meta.env.NEXT_PUBLIC_API_URL ||
+    (typeof process !== "undefined" ? process.env?.NEXT_PUBLIC_API_URL : "") ||
+    import.meta.env.VITE_API_URL ||
+    ""
+  )
+    .trim()
+    .replace(/\/+$/, "");
+
+  if (
+    configured &&
+    typeof window !== "undefined" &&
+    window.location.protocol === "https:" &&
+    /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?(\/.*)?$/i.test(configured)
+  ) {
+    return "";
+  }
+
+  return configured;
+}
+
+export const API_BASE_URL = resolveInitialApiBaseUrl();
 
 export const CONFIGURED_API_BASE_URL = API_BASE_URL;
 
