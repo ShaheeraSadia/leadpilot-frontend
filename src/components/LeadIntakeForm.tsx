@@ -307,7 +307,7 @@ export default function LeadIntakeForm({
             >
               <span>Website</span>
               <span className="text-[11px] font-normal text-slate-400">
-                Optional · pending backend support
+                Optional · skipped in API payload
               </span>
             </label>
             <input

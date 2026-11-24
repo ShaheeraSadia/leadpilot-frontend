@@ -531,14 +531,17 @@ export function createLeadPilotApiApp() {
     const email = String(body.email ?? "").trim();
     const phone = String(body.phone ?? "").trim();
     const company = String(body.company ?? "").trim();
-    const service = String(body.service ?? body.serviceNeeded ?? "").trim();
+    const rawMessage = String(body.message ?? "").trim();
+    const parsedServiceMatch = rawMessage.match(/^Service Needed:\s*([^\n]+)/i);
+    const service =
+      String(body.service ?? body.serviceNeeded ?? "").trim() ||
+      (parsedServiceMatch ? parsedServiceMatch[1].trim() : "");
     const website = String(body.website ?? "").trim();
     const budget = String(body.budget ?? body.monthlyBudget ?? "").trim();
     const timeline = String(body.timeline ?? "").trim();
-    const source = String(body.source ?? "form").trim() || "form";
+    const source = String(body.source ?? "web_form").trim() || "web_form";
 
     const notes = String(body.notes ?? body.projectNotes ?? "").trim();
-    const rawMessage = String(body.message ?? "").trim();
     const combinedNeed =
       rawMessage || [service, notes].filter(Boolean).join(" — ");
 

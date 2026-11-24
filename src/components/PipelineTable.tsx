@@ -85,9 +85,9 @@ export default function PipelineTable({
         activeStatus === "all" || lead.status === activeStatus;
       const matchesQuery =
         !q ||
-        lead.name.toLowerCase().includes(q) ||
-        lead.company.toLowerCase().includes(q) ||
-        lead.email.toLowerCase().includes(q);
+        (lead.name ?? "").toLowerCase().includes(q) ||
+        (lead.company ?? "").toLowerCase().includes(q) ||
+        (lead.email ?? "").toLowerCase().includes(q);
       return matchesStatus && matchesQuery;
     });
   }, [leads, activeStatus, searchQuery]);
@@ -262,7 +262,7 @@ export default function PipelineTable({
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="truncate font-medium text-slate-900">
-                      {lead.name}
+                      {lead.name || "Unnamed Lead"}
                     </div>
                     <div className="mt-0.5 truncate text-xs text-slate-500">
                       {[lead.company, lead.email].filter(Boolean).join(" · ") ||
@@ -429,7 +429,7 @@ export default function PipelineTable({
                   >
                     <td className="px-5 py-3.5 align-top">
                       <div className="font-medium text-slate-900">
-                        {lead.name}
+                        {lead.name || "Unnamed Lead"}
                       </div>
                       <div className="mt-0.5 text-xs text-slate-500">
                         {[lead.company, lead.email].filter(Boolean).join(" · ")}

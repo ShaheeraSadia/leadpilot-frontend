@@ -8,3 +8,9 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+declare const process: {
+  readonly env: {
+    readonly NEXT_PUBLIC_API_URL?: string;
+  };
+};

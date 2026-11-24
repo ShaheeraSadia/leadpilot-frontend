@@ -185,15 +185,11 @@ export default function App() {
         email: "nadia@nordicpay.co",
         phone: "+44 20 7946 0821",
         company: "NordicPay",
-        service: "B2B onboarding redesign & conversion analytics",
-        website: "https://nordicpay.co",
-        notes:
-          "We need to cut merchant drop-off during KYC setup ahead of our Series A partner rollout next month.",
         message:
-          "B2B onboarding redesign & conversion analytics — We need to cut merchant drop-off during KYC setup ahead of our Series A partner rollout next month.",
+          "Service Needed: B2B onboarding redesign & conversion analytics\n\nWe need to cut merchant drop-off during KYC setup ahead of our Series A partner rollout next month.",
         budget: "$3,200 per month",
         timeline: "This month",
-        source: "form",
+        source: "web_form",
       },
     });
     setActiveTab("workspace");

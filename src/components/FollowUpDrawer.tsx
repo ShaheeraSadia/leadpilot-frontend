@@ -235,7 +235,7 @@ export default function FollowUpDrawer({
               <span>{TIER_LABELS[detail.tier]}</span>
             </div>
             <h2 className="mt-1 truncate text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">
-              {detail.name}
+              {detail.name || "Unnamed Lead"}
             </h2>
             <p className="mt-0.5 truncate text-xs text-slate-500">
               {[detail.company, detail.email, detail.phone]

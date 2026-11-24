@@ -60,50 +60,47 @@ export interface LeadPayload {
   email: string;
   phone: string;
   company: string;
-  service?: string;
-  website?: string;
-  notes?: string;
   message: string;
   budget: string;
   timeline: string;
-  source: "form";
+  source: string;
 }
 
 export const DEFAULT_LOCAL_FASTAPI_URL = "http://127.0.0.1:8002";
 
-export const CONFIGURED_API_BASE_URL = (
-  import.meta.env.VITE_API_URL ||
+export const API_BASE_URL = (
   import.meta.env.NEXT_PUBLIC_API_URL ||
+  (typeof process !== "undefined" ? process.env?.NEXT_PUBLIC_API_URL : "") ||
+  import.meta.env.VITE_API_URL ||
   ""
-).trim();
+)
+  .trim()
+  .replace(/\/+$/, "");
+
+export const CONFIGURED_API_BASE_URL = API_BASE_URL;
 
 export function mapFormToLeadPayload(values: IntakeFormValues): LeadPayload {
   const service = values.serviceNeeded.trim();
   const notes = values.projectNotes.trim();
-  const combinedMessage = [service, notes].filter(Boolean).join(" — ");
 
-  const payload: LeadPayload = {
+  const messageParts: string[] = [];
+  if (service) {
+    messageParts.push(`Service Needed: ${service}`);
+  }
+  if (notes) {
+    messageParts.push(notes);
+  }
+
+  return {
     name: values.fullName.trim(),
     email: values.email.trim(),
     phone: values.phone.trim(),
     company: values.company.trim(),
-    message: combinedMessage,
+    message: messageParts.join("\n\n"),
     budget: values.monthlyBudget.trim(),
     timeline: values.timeline.trim(),
-    source: "form",
+    source: "web_form",
   };
-
-  if (service) {
-    payload.service = service;
-  }
-  if (notes) {
-    payload.notes = notes;
-  }
-  if (values.website.trim()) {
-    payload.website = values.website.trim();
-  }
-
-  return payload;
 }
 
 export function getTierFromScore(score: number): LeadTier {
@@ -126,8 +123,10 @@ export const TIER_LABELS: Record<LeadTier, string> = {
 };
 
 export function formatUnixTimestamp(ts?: number): string {
-  if (!ts) return "—";
-  const date = new Date(ts * 1000);
+  if (!ts || !Number.isFinite(ts)) return "—";
+  const ms = ts > 1e12 ? ts : ts * 1000;
+  const date = new Date(ms);
+  if (Number.isNaN(date.getTime())) return "—";
   return date.toLocaleString("en-US", {
     month: "short",
     day: "numeric",
@@ -147,6 +146,35 @@ export class ApiHttpError extends Error {
   }
 }
 
+function extractApiErrorDetail(data: unknown, status: number): string {
+  if (data && typeof data === "object") {
+    const record = data as Record<string, unknown>;
+    if (typeof record.detail === "string" && record.detail.trim()) {
+      return record.detail.trim();
+    }
+    if (Array.isArray(record.detail) && record.detail.length > 0) {
+      const first = record.detail[0] as Record<string, unknown> | undefined;
+      if (first && typeof first.msg === "string" && first.msg.trim()) {
+        return first.msg.trim();
+      }
+    }
+    if (typeof record.message === "string" && record.message.trim()) {
+      return record.message.trim();
+    }
+  }
+
+  if (status === 400) {
+    return "Invalid request. Provide at least one of email, phone, or message.";
+  }
+  if (status === 404) {
+    return "Lead not found.";
+  }
+  if (status === 502) {
+    return "AI qualification service returned an upstream error (HTTP 502).";
+  }
+  return `Request failed with status ${status}`;
+}
+
 export async function apiRequest<T>(
   baseUrl: string,
   path: string,
@@ -163,14 +191,11 @@ export async function apiRequest<T>(
     },
   });
 
-  const data = await response.json().catch(() => ({}));
+  const data = await response.json().catch(() => null);
   if (!response.ok) {
-    const detail =
-      typeof data?.detail === "string"
-        ? data.detail
-        : `Request failed with status ${response.status}`;
+    const detail = extractApiErrorDetail(data, response.status);
     throw new ApiHttpError(response.status, detail);
   }
 
-  return data as T;
+  return (data ?? {}) as T;
 }

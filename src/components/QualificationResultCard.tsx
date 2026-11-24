@@ -140,7 +140,7 @@ export default function QualificationResultCard({
               </span>
             </div>
             <h2 className="mt-1 truncate text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">
-              {lead.name}
+              {lead.name || "Unnamed Lead"}
             </h2>
             <p className="mt-0.5 truncate text-sm text-slate-600">
               {[lead.company, lead.email].filter(Boolean).join(" · ") ||
